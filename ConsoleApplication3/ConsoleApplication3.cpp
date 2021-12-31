@@ -37,17 +37,17 @@ int pam2 = 1;
 
 int main(){
 
-	src = cv::imread("C:\\Users\\isoff\\WORK_SPACE\\ConsoleApplicationSample\\OSAKAPICTURE\\img3.jpg");
+	src = cv::imread("C:\\Users\\isoff\\WORK_SPACE\\ConsoleApplicationSample\\OSAKAPICTURE\\img2.png");
 	if (src.empty() == true) {
 		return -1;
 	}
 	cv::Mat src_clone = src.clone();
 	param1.thresh = 150;
 	param1.maxval = 200;
-	param1.houghDp = 4;
-	param1.houghMinDist = 50;
-	param1.houghParam1 = 50;
-	param1.houghParam2 = 100;
+	param1.houghDp = 1;
+	param1.houghMinDist =19;
+	param1.houghParam1 = 100;
+	param1.houghParam2 = 15;
 	param1.updateKey = 0;
 
 	
