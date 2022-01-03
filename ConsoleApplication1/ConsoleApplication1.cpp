@@ -9,7 +9,7 @@
 
 void ChangeHough(int state, void* userdata);
 void ChangeHoughParam1(int pos, void* userdata);
-
+void CircleDistance(std::vector<cv::Vec3f>, int*, int, int);
 
 class CountParam {
 public:
@@ -17,12 +17,15 @@ public:
 	int houghMinDist = 0;
 	int houghParam1 = 0;
 	int houghParam2 = 0;
-	int houghMinRadius = 0;
-	int houghMaxRadius = 0;
+	int houghRadius = 0;
 	int updateKey = 0;
 	int houghRate = 0;
 
 };
+
+
+#define RATE_R 3
+#define RATE_D 1.2
 
 CountParam param1;
 
@@ -30,13 +33,15 @@ cv::Mat src_gray;
 cv::Mat src_bin;
 cv::Mat src_canny;
 cv::Mat src;
+cv::Mat src_thr;
+cv::Mat src_mol;
 
 int pam1 = 0;
 int pam2 = 1;
 
 int main() {
 
-	src = cv::imread("C:\\Users\\isoff\\WORK_SPACE\\ConsoleApplicationSample\\OSAKAPICTURE\\img3.png");
+	src = cv::imread("C:\\Users\\isoff\\WORK_SPACE\\ConsoleApplicationSample\\OSAKAPICTURE\\img2.png");
 	if (src.empty() == true) {
 		return -1;
 	}
@@ -50,13 +55,12 @@ int main() {
 	param1.houghParam2 = 15;
 	param1.updateKey = 0;
 	param1.houghRate = 1;
+	param1.houghRadius = 20;
 
 
-	int filter_prewitt[3][3] = {
-		{-1,0,1},
-		{-1,0,1},
-		{-1,0,1}
-	};
+	int threshold = 50;
+	int maxVal = 100;
+
 	int filter_size = 3;
 	int filter_size2 = filter_size / 2;
 	cv::namedWindow("Hough", cv::WINDOW_NORMAL);
@@ -65,35 +69,25 @@ int main() {
 	cv::setWindowProperty("bin", cv::WND_PROP_FULLSCREEN, cv::WINDOW_FREERATIO);
 
 	cv::namedWindow("Trackbar");
-	cv::createTrackbar("Dp", "Trackbar", &param1.houghDp, 5, ChangeHoughParam1);
+	cv::namedWindow("Threshold");
+	cv::createTrackbar("Dp", "Trackbar", &param1.houghDp, 10, ChangeHoughParam1);
 	cv::createTrackbar("MinDist", "Trackbar", &param1.houghMinDist, 100, ChangeHoughParam1);
 	cv::createTrackbar("param1", "Trackbar", &param1.houghParam1, 100, ChangeHoughParam1);
 	cv::createTrackbar("param2", "Trackbar", &param1.houghParam2, 100, ChangeHoughParam1);
+	cv::createTrackbar("MRadius", "Trackbar", &param1.houghRadius, 100, ChangeHoughParam1);
 	cv::createTrackbar("houghRate", "Trackbar", &param1.houghRate, 4, ChangeHough);
+
 	cv::createTrackbar("update", "Trackbar", &param1.updateKey, 1, ChangeHough);
 
+	cv::resizeWindow("Trackbar",400,600);
+	cv::createTrackbar("threshold", "Threshold", &threshold, 100, ChangeHoughParam1);
+	cv::createTrackbar("maxVal", "Threshold", &maxVal, 200, ChangeHoughParam1);
 	
 	cv::cvtColor(src, src_gray, cv::COLOR_BGR2GRAY);
 	cv::GaussianBlur(src_gray, src_bin, cv::Size(5, 5), 0);
+	
 	cv::Canny(src_bin,src_canny,param1.houghParam1* param1.houghRate,param1.houghParam2* param1.houghRate);
 
-	//threshold(src_gray, src_bin, param1.thresh, param1.maxval, cv::THRESH_BINARY);
-	/*src_bin = src_gray.clone();
-	for (int y = filter_size2; y < height - filter_size2; y++) {
-		for (int x = filter_size2; x < width - filter_size2; x++) {
-			int val = 0;
-			for (int n = -filter_size2; n <= filter_size2; n++) {
-				for (int m = -filter_size2; m <= filter_size2; m++) {
-					val += src_gray.at<unsigned char>(y + n, x + m) * filter_prewitt[m + filter_size2][n + filter_size2];
-				}
-			}
-			if (val > 255)
-				val = 255;
-			if (val < 0)
-				val = 0;
-			src_bin.at<unsigned char>(y, x) = val;
-		}
-	}*/
 
 	cv::imshow("bin", src_canny);
 	cv::resizeWindow("bin", 640, 480);
@@ -104,7 +98,7 @@ int main() {
 		param1.houghMinDist * param1.houghRate,
 		param1.houghParam1 * param1.houghRate,
 		param1.houghParam2 * param1.houghRate,
-		10, 30);
+		param1.houghRadius-RATE_R, param1.houghRadius+RATE_R);
 
 	int count = circles.size();
 	printf("Count::%d\n", count);
@@ -130,23 +124,6 @@ int main() {
 			cv::namedWindow("Hough", cv::WINDOW_NORMAL);
 			cv::setWindowProperty("Hough", cv::WND_PROP_FULLSCREEN, cv::WINDOW_FREERATIO);
 
-			//threshold(src_gray, src_bin, param1.thresh, param1.maxval, cv::THRESH_BINARY);
-			/*src_bin = src_gray.clone();
-			for (int y = filter_size2; y < height - filter_size2; y++) {
-				for (int x = filter_size2; x < width - filter_size2; x++) {
-					int val = 0;
-					for (int n = -filter_size2; n <= filter_size2; n++) {
-						for (int m = -filter_size2; m <= filter_size2; m++) {
-							val += src_gray.at<unsigned char>(y + n, x + m) * filter_prewitt[m + filter_size2][n + filter_size2];
-						}
-					}
-					if (val > 255)
-						val = 255;
-					if (val < 0)
-						val = 0;
-					src_bin.at<unsigned char>(y, x) = val;
-				}
-			}*/
 			cv::Canny(src_bin, src_canny, param1.houghParam1* param1.houghRate, param1.houghParam2* param1.houghRate);
 			std::vector<cv::Vec3f> circles;
 			cv::HoughCircles(src_bin, circles, cv::HOUGH_GRADIENT,
@@ -154,9 +131,17 @@ int main() {
 				param1.houghMinDist * param1.houghRate,
 				param1.houghParam1 * param1.houghRate,
 				param1.houghParam2 * param1.houghRate,
-				10, 30);
+				param1.houghRadius-RATE_R, param1.houghRadius+RATE_R);
 
 			int count = circles.size();
+
+			int* string = new int[count];
+			for (int i = 0; i < count; i++) {
+				string[i] = 0;
+			}
+
+			CircleDistance(circles,string,width,height);
+
 			printf("Count::%d\n", count);
 			
 			if (count < 1000) {
@@ -193,4 +178,69 @@ void ChangeHough(int state, void* userdata) {
 		pam1 = 0;
 
 
+}
+
+void CircleDistance(std::vector<cv::Vec3f> circle, int* string, int width, int height) {
+	int circle_size = circle.size();
+	int center_x = 0, center_y = 0, point = 0;
+	int minPoint = 100000;
+	int centerNum = 0;
+	int secondCenterNum = 0;
+	int distance_x = 0, distance_y = 0, distance = 0;
+	int radiusX2 = 0;
+	int group = 1;
+	for (int i = 0; i < circle.size(); i++) {
+		center_x = (int)abs(width / 2 - circle[i][0]);
+		center_y = (int)abs(width / 2 - circle[i][1]);
+		point = center_x * center_x + center_y * center_y;
+		if (minPoint > point) {
+			secondCenterNum = centerNum;
+			centerNum = i;
+			minPoint = point;
+		}
+	}
+	distance_x = (int)abs(circle[secondCenterNum][0] - circle[centerNum][0]);
+	distance_y = (int)abs(circle[secondCenterNum][1] - circle[centerNum][1]);
+	radiusX2 = distance_x * distance_x + distance_y * distance_y;
+
+	string[centerNum] = 1;
+	string[secondCenterNum] = 1;
+
+	for (int i = 0; i < circle_size; i++) {
+		for (int j = 0; j < circle_size; j++) {
+			distance_x = (int)abs(circle[i][0] - circle[j][0]);
+			distance_y = (int)abs(circle[i][1] - circle[j][1]);
+			distance = distance_x * distance_x + distance_y * distance_y;
+			if (RATE_D * radiusX2 > distance) {
+				if (string[i] == 0 && string[j] == 0) {
+					string[i] = group + 1;
+					string[j] = group + 1;
+					group++;
+				}
+				else if (string[i] == 1 || string[j] == 1) {
+					string[i] = 1;
+					string[j] = 1;
+				}
+				else if (string[i] > 1 && string[j] > 1) {
+					if (string[i] > string[j]) {
+						string[i] = string[j];
+					}
+					else {
+						string[j] = string[i];
+					}
+				}
+				else {
+					if (string[i] == 0) {
+						string[i] = string[j];
+					}
+					else {
+						string[j] = string[i];
+					}
+				}
+			}
+		}
+	}
+	for (int k = 0; k < circle_size; k++) {
+		printf("%d ", string[k]);
+	}
 }

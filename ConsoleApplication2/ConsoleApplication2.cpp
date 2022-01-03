@@ -9,16 +9,28 @@
 
 int main()
 {
-	cv::VideoCapture cap(2);//デバイスの番号
+	cv::VideoCapture cap(0);//デバイスの番号
+
 
 	if (!cap.isOpened()) {
 		return -1;
 	}
 
+	int radius = 50;
+
+	cv::namedWindow("Trackbar");
+	cv::createTrackbar("Radius", "Trackbar", &radius, 50);
 	cv::Mat frame;
+	cv::Mat img;
+	
 
 	while (cap.read(frame)) {
-		cv::imshow("win", frame);
+		int width = frame.cols;
+		int height = frame.rows;
+		img = frame.clone();
+		printf("width %d height %d",width,height);
+		cv::circle(img, cv::Point(width/2, height / 2), radius, cv::Scalar(0, 255, 255), 5, cv::LINE_AA);
+		cv::imshow("win", img);
 		const int key = cv::waitKey(1);
 		if (key == 'q') {
 			break;
